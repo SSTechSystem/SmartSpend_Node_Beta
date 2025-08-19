@@ -19,12 +19,12 @@ exports.getDashboardData = async (req) => {
     const dashboardStats = await smartspendDB.query(
       `
         SELECT
-            (SELECT LastLogin FROM UserMaster WHERE Id = :Id) as lastLogin,
-            (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :adminRole AND Enable = 1) as adminCount,
-            (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :appUserRole AND Enable = 1) as appUserCount,
-            (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :guestRole AND Enable = 1) as guestUserCount,
-            (SELECT COUNT(*) FROM Feedback WHERE IsRead = 1) as viewedFeedbackCount,
-            (SELECT COUNT(*) FROM Feedback) as totalFeedbackCount
+            (SELECT LastLogin FROM usermaster WHERE Id = :Id) as lastLogin,
+            (SELECT COUNT(*) FROM usermaster WHERE RoleId = :adminRole AND Enable = 1) as adminCount,
+            (SELECT COUNT(*) FROM usermaster WHERE RoleId = :appUserRole AND Enable = 1) as appUserCount,
+            (SELECT COUNT(*) FROM usermaster WHERE RoleId = :guestRole AND Enable = 1) as guestUserCount,
+            (SELECT COUNT(*) FROM feedback WHERE IsRead = 1) as viewedFeedbackCount,
+            (SELECT COUNT(*) FROM feedback) as totalFeedbackCount
         `,
       {
         replacements: {

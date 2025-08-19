@@ -14,7 +14,7 @@ app.use(
   })
 );
 
-app.use('/smartspend', routes);
+app.use('/', routes);
 
 app.use((_, res) => {
   res.status(405).json({

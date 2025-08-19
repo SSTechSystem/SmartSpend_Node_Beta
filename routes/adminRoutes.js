@@ -46,11 +46,15 @@ route.get('/cms', verifyToken([ROLE.ADMIN]), cmsControllers.getCmsData);
 
 route.post('/add-cms', verifyToken([ROLE.ADMIN]), cmsControllers.addCms);
 
+route.patch('/edit-cms', verifyToken([ROLE.ADMIN]), cmsControllers.editCms);
+
 route.get('/cms-details/:id', verifyToken([ROLE.ADMIN]), cmsControllers.getCmsDetails);
 
 route.get('/view-cms/:id', verifyToken([ROLE.ADMIN]), cmsControllers.viewCms);
 
 route.delete('/delete-cms/:id', verifyToken([ROLE.ADMIN]), cmsControllers.deleteCms);
+
+route.delete('/delete-version-history', verifyToken([ROLE.ADMIN]), cmsControllers.deleteVersionHistory);
 /* Admin CMS Routes */
 
 route.use((_, res) => {

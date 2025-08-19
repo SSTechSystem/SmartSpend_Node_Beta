@@ -113,7 +113,7 @@ exports.addCms = async (req) => {
       res_arr.type = common.response_type.success;
       res_arr.message = common.response_msg.already_cms_exist;
       return res_arr;
-    };
+    }
 
     const cmsObj = {
       Name: name,
@@ -123,27 +123,114 @@ exports.addCms = async (req) => {
       MetaTags: meta_tags || null,
       MetaDescription: meta_description || null,
       IsRelease: is_release,
-      CreatedBy: Id
+      CreatedBy: Id,
     };
-    
+
     const cms = await db.Page.create(cmsObj);
-    if(version_history && version_history?.lenth > 0) {
+    if (version_history && version_history?.lenth > 0) {
       const addVersionDetailsPromise = version_history.map((item) => {
         return db.VersionHistory.create({
           Title: item.title,
           Description: item.description,
           Platform: item.platform,
-          IsForce: item?.is_force ?? false ? item.is_force : false ,
+          IsForce: item?.is_force ?? false ? item.is_force : false,
           PageId: cms.Id,
-          CreatedBy: Id
+          CreatedBy: Id,
         });
-      })
+      });
       await Promise.all(addVersionDetailsPromise);
-    };
+    }
 
     res_arr.statusCode = common.response_status_code.success;
     res_arr.type = common.response_type.success;
     res_arr.message = common.response_msg.cms_added_successfully;
+    return res_arr;
+  } catch (error) {
+    console.log("error: ", error);
+    return universalFunction.sendErrorResponse(res, error);
+  }
+};
+
+exports.editCms = async (req) => {
+  try {
+    const res_arr = {
+      statusCode: common.response_status_code.bad_request,
+      type: common.response_type.error,
+      data: {},
+    };
+
+    const {
+      id,
+      name,
+      title,
+      description,
+      meta_tags,
+      meta_description,
+      is_release = false,
+      version_history = [],
+    } = req.body;
+    const { Id } = req.userProfile;
+
+    if (!parseInt(id)) {
+      res_arr.message = common.response_msg.cms_id_required;
+      return res_arr;
+    }
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      res_arr.message = common.response_msg.invalid_cms_name;
+      return res_arr;
+    }
+    if (!title || typeof title !== "string" || title.trim() === "") {
+      res_arr.message = common.response_msg.invalid_cms_pagetitle;
+      return res_arr;
+    }
+
+    const createSlug = (name) =>
+      name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+    const slug = createSlug(name);
+
+    const criteria = { Slug: slug, Enable: true };
+    const cmsData = await db.Page.findOne({ where: criteria });
+
+    if (cmsData) {
+      res_arr.statusCode = common.response_status_code.success;
+      res_arr.type = common.response_type.success;
+      res_arr.message = common.response_msg.already_cms_exist;
+      return res_arr;
+    }
+
+    const cmsObj = {
+      Name: name,
+      PageTitle: title,
+      Slug: slug,
+      PageDescription: description || null,
+      MetaTags: meta_tags || null,
+      MetaDescription: meta_description || null,
+      IsRelease: is_release,
+      UpdatedBy: Id,
+    };
+
+    await db.Page.update(cmsObj,{ where: { Id: id } });
+    if (version_history && version_history?.lenth > 0) {
+      const addVersionDetailsPromise = version_history.map((item) => {
+        return db.VersionHistory.update({
+          Title: item.title,
+          Description: item.description,
+          Platform: item.platform,
+          IsForce: item?.is_force ?? false ? item.is_force : false,
+          UpdatedBy: Id,
+        },{ 
+          where: { Id: id }
+        });
+      });
+      await Promise.all(addVersionDetailsPromise);
+    }
+
+    res_arr.statusCode = common.response_status_code.success;
+    res_arr.type = common.response_type.success;
+    res_arr.message = common.response_msg.cms_updated_successfully;
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
@@ -168,11 +255,23 @@ exports.getCmsDetails = async (req) => {
     }
 
     const data = await db.Page.findOne({
-      where: { Id: id }, 
-      attributes: [["Id", "id"], ["Name", "name"], ["Slug", "slug"], ["PageTitle", "page_title"], ["PageDescription", "page_description"], ["MetaTags", "meta_tags"], ["MetaDescription", "meta_description"],["Platform","platform"],["IsRelease","is_release"],["CreatedAt","created_at"],["Enable","enable"]],
-      raw: true
+      where: { Id: id },
+      attributes: [
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Slug", "slug"],
+        ["PageTitle", "page_title"],
+        ["PageDescription", "page_description"],
+        ["MetaTags", "meta_tags"],
+        ["MetaDescription", "meta_description"],
+        ["Platform", "platform"],
+        ["IsRelease", "is_release"],
+        ["CreatedAt", "created_at"],
+        ["Enable", "enable"],
+      ],
+      raw: true,
     });
-    if(isEmpty(data)) {
+    if (isEmpty(data)) {
       res_arr.statusCode = common.response_status_code.not_found;
       res_arr.message = common.response_msg.not_found_cms;
       return res_arr;
@@ -180,8 +279,14 @@ exports.getCmsDetails = async (req) => {
 
     const versionHistory = await db.VersionHistory.findAll({
       where: { cms_id: id },
-      attributes: ["id", ["Title", "title"], ["Description", "description"], ["Platform", "platform"], ["IsForce", "is_force"]],
-      raw: true
+      attributes: [
+        "id",
+        ["Title", "title"],
+        ["Description", "description"],
+        ["Platform", "platform"],
+        ["IsForce", "is_force"],
+      ],
+      raw: true,
     });
     data.version_history = versionHistory;
 
@@ -212,22 +317,31 @@ exports.viewCms = async (req) => {
       return res_arr;
     }
 
-     const data = await db.Page.findOne({
-      where: { Id: id }, 
-      attributes: [["PageDescription", "page_description"],["IsRelease","is_release"]],
-      raw: true
+    const data = await db.Page.findOne({
+      where: { Id: id },
+      attributes: [
+        ["PageDescription", "page_description"],
+        ["IsRelease", "is_release"],
+      ],
+      raw: true,
     });
-    if(isEmpty(data)) {
+    if (isEmpty(data)) {
       res_arr.statusCode = common.response_status_code.not_found;
       res_arr.message = common.response_msg.not_found_cms;
       return res_arr;
     }
 
-    if(data.is_release) {
+    if (data.is_release) {
       const versionHisory = await db.VersionHistory.findAll({
         where: { cms_id: id },
-        attributes: ["id", ["Title", "title"], ["Description", "description"], ["Platform", "platform"], ["IsForce", "is_force"]],
-        raw: true
+        attributes: [
+          "id",
+          ["Title", "title"],
+          ["Description", "description"],
+          ["Platform", "platform"],
+          ["IsForce", "is_force"],
+        ],
+        raw: true,
       });
       data.version_history = versionHisory;
       delete data.PageDescription;
@@ -266,6 +380,37 @@ exports.deleteCms = async (req) => {
     res_arr.statusCode = common.response_status_code.success;
     res_arr.type = common.response_type.success;
     res_arr.message = common.response_msg.cms_deleted_successfully;
+    return res_arr;
+  } catch (error) {
+    console.log("error: ", error);
+    return universalFunction.sendErrorResponse(res, error);
+  }
+};
+
+exports.deleteVersionHistory = async (req) => {
+  try {
+    const res_arr = {
+      statusCode: common.response_status_code.bad_request,
+      type: common.response_type.error,
+      data: {},
+    };
+    let { cms_id, version_history_id } = req.body;
+    cms_id = parseInt(cms_id);
+    version_history_id = parseInt(version_history_id);
+
+    if (!cms_id || !version_history_id) {
+      res_arr.statusCode = common.response_status_code.bad_request;
+      res_arr.message = common.response_msg.invalid_request_body;
+      return res_arr;
+    }
+
+    await db.VersionHistory.destroy({
+      where: { id: version_history_id, cms_id },
+    });
+
+    res_arr.statusCode = common.response_status_code.success;
+    res_arr.type = common.response_type.success;
+    res_arr.message = common.response_msg.version_history_record_deleted;
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
