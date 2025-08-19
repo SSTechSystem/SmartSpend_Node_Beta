@@ -167,7 +167,8 @@
     "new_admin_added": "New admin added successfully",
     "admin_details": "Admin details get successfully",
     "admin_details_updated": "Admin details has been updated successfully",
-    "admin_deleted": "Admin has been deleted successfully"
+    "admin_deleted": "Admin has been deleted successfully",
+    "role_list": "Role list get successfully"
   },
   "file_extension": {
     "jpg": ".jpg",

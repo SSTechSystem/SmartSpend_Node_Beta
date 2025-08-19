@@ -14,7 +14,7 @@ route.get('/profile', verifyToken([ROLE.ADMIN]), authControllers.getProfile);
 
 route.patch('/update-profile', verifyToken([ROLE.ADMIN]), adminUpdateProfileVal,authControllers.updateProfile);
 
-route.patch('/update-password', verifyToken([ROLE.ADMIN]), adminUpdatePasswordVal, authControllers.updatePassword);
+route.patch('/change-password', verifyToken([ROLE.ADMIN]), adminUpdatePasswordVal, authControllers.updatePassword);
 
 route.post('/signout', verifyToken([ROLE.ADMIN]), authControllers.signOut);
 /* Admin Authentication Routes */
@@ -37,6 +37,8 @@ route.patch('/admin-add-or-edit', verifyToken([ROLE.ADMIN]), validateAdminDetail
 route.get('/admin-details/:id', verifyToken([ROLE.ADMIN]), adminControllers.getAdminDetails);
 
 route.delete('/admin-delete/:id', verifyToken([ROLE.ADMIN]), adminControllers.adminDelete);
+
+route.get('/roles', verifyToken([ROLE.ADMIN]), adminControllers.getRoles);
 /* Admin Panel Routes */
 
 /* Admin CMS Routes */

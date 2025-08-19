@@ -5,6 +5,7 @@ const smartspendDB = require("../../config/dbconfig");
 const { Sequelize } = require("sequelize");
 const moment = require("moment");
 const generatePassword = require("../../common/helper/generateEncryptedPassword");
+const { isEmpty } = require("../../common/utils/utils");
 
 exports.getDashboardData = async (req) => {
   try {
@@ -13,10 +14,12 @@ exports.getDashboardData = async (req) => {
       type: common.response_type.error,
       data: {},
     };
+    const { Id } = req.userProfile;
 
     const dashboardStats = await smartspendDB.query(
       `
         SELECT
+            (SELECT LastLogin FROM UserMaster WHERE Id = :Id) as lastLogin,
             (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :adminRole AND Enable = 1) as adminCount,
             (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :appUserRole AND Enable = 1) as appUserCount,
             (SELECT COUNT(*) FROM UserMaster WHERE RoleId = :guestRole AND Enable = 1) as guestUserCount,
@@ -25,6 +28,7 @@ exports.getDashboardData = async (req) => {
         `,
       {
         replacements: {
+          Id,
           adminRole: constant.ROLE.ADMIN,
           appUserRole: constant.ROLE.APP_USER,
           guestRole: constant.ROLE.APP_GUEST_USER,
@@ -43,6 +47,7 @@ exports.getDashboardData = async (req) => {
       totalGuestUsers: dashboardStats.guestUserCount,
       totalViewedFeedbacks: dashboardStats.viewedFeedbackCount,
       totalFeedbacks: dashboardStats.totalFeedbackCount,
+      lastLogin: dashboardStats.lastLogin,
     };
     return res_arr;
   } catch (error) {
@@ -118,26 +123,38 @@ exports.getCustomersData = async (req) => {
     const data = await db.UserMaster.findAndCountAll({
       where: query,
       attributes: [
-        "Id",
-        "Name",
-        "Email",
-        "Phone",
-        "DeviceType",
-        "CreatedAt",
-        "Enable",
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Email", "email"],
+        ["Phone", "phone"],
+        ["DeviceType", "device_type"],
+        ["CreatedAt", "created_at"],
+        ["Enable", "enable"],
       ],
       include: [
         {
           model: db.RoleMaster,
           as: "Role",
-          attributes: ["RoleId", "Name"],
+          attributes: [
+            ["RoleId", "role_id"],
+            ["Name", "role_name"],
+          ],
         },
       ],
       ...options,
+      raw: true,
+      nest: true
     });
 
     const totalPages = Math.ceil(data.count / limit);
-    data.customer_details = data.rows;
+    data.customer_details = data.rows.map((customer) => {
+      if (customer.Role && customer.Role.role_id === constant.ROLE.APP_USER) {
+        customer.Role.role_name = "Registered User";
+      } else if (customer.Role && customer.Role.role_id === constant.ROLE.APP_GUEST_USER) {
+        customer.Role.role_name = "Guest User";
+      }
+      return customer;
+    });
     data.limit = limit;
     data.total_pages = totalPages;
     data.total_records = data.count;
@@ -179,9 +196,8 @@ exports.getFeedbacksData = async (req) => {
       query[Sequelize.Op.or] = [
         { Name: { [Sequelize.Op.like]: `%${search}%` } },
         { Email: { [Sequelize.Op.like]: `%${search}%` } },
-        { AppExperience: { [Sequelize.Op.like]: `%${AppExperience}%` } },
-        { Message: { [Sequelize.Op.like]: `%${Message}%` } },
-        { IsRead: { [Sequelize.Op.like]: `%${IsRead}%` } },
+        { AppExperience: { [Sequelize.Op.like]: `%${search}%` } },
+        { Message: { [Sequelize.Op.like]: `%${search}%` } },
       ];
     }
 
@@ -191,6 +207,15 @@ exports.getFeedbacksData = async (req) => {
 
     const data = await db.Feedback.findAndCountAll({
       where: query,
+      attributes: [
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Email", "email"],        
+        ["AppExperience", "app_experience"],
+        ["Message", "message"],
+        ["IsRead", "is_read"],        
+        ["CreatedAt", "created_at"],
+      ],
       order: [[sortby, order_type]],
       offset: (page - 1) * limit,
       limit: limit,
@@ -237,7 +262,7 @@ exports.getBackupsData = async (req) => {
     if (search) {
       query[Sequelize.Op.or] = [
         { "$user.Name$": { [Sequelize.Op.like]: `%${search}%` } },
-        { Email: { [Sequelize.Op.like]: `%${search}%` } },
+        { "$user.Email$": { [Sequelize.Op.like]: `%${search}%` } },
         { BackupFileName: { [Sequelize.Op.like]: `%${search}%` } },
       ];
     }
@@ -248,16 +273,19 @@ exports.getBackupsData = async (req) => {
 
     const data = await db.Backup.findAndCountAll({
       where: query,
-      attributes: ["Id", "BackupFileName", "CreatedAt", "Enable"],
+      attributes: [["Id", "id"], ["BackupFileName", "backup_file_name"], ["CreatedAt", "created_at"], ["UpdatedAt", "updated_at"], ["Enable", "enable"]],
       include: [
         {
           model: db.UserMaster,
-          attributes: ["Name"],
+          as: "user",
+          attributes: [["Name", "name"], ["Email", "email"]],
         },
       ],
       order: [[sortby, order_type]],
       offset: (page - 1) * limit,
       limit: limit,
+      raw: true,
+      nest: true,
     });
 
     data.backups_details = data.rows;
@@ -316,14 +344,11 @@ exports.adminAddOrEdit = async (req) => {
           message: common.response_msg.id_required,
         };
       }
-      await db.UserMaster.update(
-        adminData,
-        {
-          where: {
-            Id: req.body.id,
-          },
-        }
-      );
+      await db.UserMaster.update(adminData, {
+        where: {
+          Id: req.body.id,
+        },
+      });
 
       res_arr.statusCode = common.response_status_code.success;
       res_arr.type = common.response_type.success;
@@ -353,7 +378,10 @@ exports.getAdminsData = async (req) => {
     limit = parseInt(limit) || constant.DEFAULT_PAGE_LIMIT;
     sortby = sortby || "CreatedAt";
     order_type = order_type || "DESC";
-    let query = {};
+    let query = {
+      RoleId: constant.ROLE.ADMIN,
+      Enable: 1,
+    };
 
     const options = {
       order: [[sortby, order_type]],
@@ -376,18 +404,20 @@ exports.getAdminsData = async (req) => {
     const data = await db.UserMaster.findAndCountAll({
       where: query,
       attributes: [
-        "Id",
-        "Name",
-        "Email",
-        "Phone",
-        "CreatedAt",
-        "LastLogin",
-        "Enable",
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Email", "email"],
+        ["Phone", "phone"],
+        ["CreatedAt", "created_at"],
+        ["LastLogin", "last_login"],
+        ["Enable", "enable"],
       ],
       ...options,
+      raw: true,
+      nest: true,
     });
 
-    data.backups_details = data.rows;
+    data.admins_details = data.rows;
     data.limit = limit;
     data.total_pages = Math.ceil(data.count / limit);
     data.current_page = page;
@@ -433,11 +463,11 @@ exports.getAdminDetails = async (req) => {
 
     const data = await db.UserMaster.findOne({
       where: query,
-      attributes: ["Id", "Name", "Email", "Phone", "Enable"],
+      attributes: [["Id", "id"], ["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["Enable", "enable"]],
       raw: true,
     });
 
-    if (!isEmpty(data)) {
+    if (isEmpty(data)) {
       return {
         statusCode: common.response_status_code.not_found,
         type: common.response_type.error,
@@ -476,13 +506,53 @@ exports.adminDelete = async (req) => {
         type: common.response_type.error,
         message: common.response_msg.incorrect_params,
       };
-    }
+    };
 
     await db.UserMaster.update({ Enable: false }, { where: { Id: id } });
 
     res_arr.statusCode = common.response_status_code.success;
     res_arr.type = common.response_type.success;
     res_arr.message = common.response_msg.admin_deleted;
+    return res_arr;
+  } catch (error) {
+    console.log("error: ", error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
+  }
+};
+
+exports.getRoles = async (req) => {
+  try {
+    const res_arr = {
+      statusCode: common.response_status_code.bad_request,
+      type: common.response_type.error,
+      data: {},
+    };
+
+    data = await db.RoleMaster.findAll({
+      attributes: [
+        ["RoleId", "id"],
+        ["Name", "name"],
+      ],
+      raw: true,
+    });
+
+    data = data.map((role) => {
+      if (role.id === constant.ROLE.APP_USER) {
+        role.name = "Registered User";
+      } else if (role.id === constant.ROLE.APP_GUEST_USER) {
+        role.name = "Guest User";
+      }
+      return role;
+    });
+
+    res_arr.statusCode = common.response_status_code.success;
+    res_arr.type = common.response_type.success;
+    res_arr.message = common.response_msg.role_list;
+    res_arr.data = data;
     return res_arr;
   } catch (error) {
     console.log("error: ", error);

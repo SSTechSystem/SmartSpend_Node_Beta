@@ -31,20 +31,8 @@ exports.verifyToken = (requiredRole) => {
         if (err) throw common.response_msg.invalid_token;
       });
 
-      const isUserExist = await smartspendDB.query(
-        `SELECT * FROM user_tokens WHERE token = :token`,
-        {
-          replacements: { token },
-          type: QueryTypes.SELECT,
-        }
-      );
-
-      if (!isUserExist || isUserExist.length === 0) {
-        throw common.response_msg.unauthorized_action;
-      }
-
       const user_details = await smartspendDB.query(
-        "SELECT Id, Name, Email, RoleId FROM usermaster WHERE token = :token",
+        "SELECT Id, Name, Email, RoleId FROM usermaster WHERE AuthToken = :token",
         {
           replacements: { token },
           type: QueryTypes.SELECT,

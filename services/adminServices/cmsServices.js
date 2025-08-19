@@ -38,13 +38,14 @@ exports.getCmsData = async (req) => {
     const data = await db.Page.findAndCountAll({
       where: query,
       attributes: [
-        "Id",
-        "Name",
-        "Slug",
-        "PageTitle",
-        "IsRelease",
-        "CreatedAt",
-        "Enable",
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Slug", "slug"],
+        ["PageTitle", "page_title"],
+        ["PageDescription", "page_description"],
+        ["IsRelease", "is_release"],
+        ["CreatedAt", "created_at"],
+        ["Enable", "enable"],
       ],
       ...options,
     });
@@ -168,7 +169,7 @@ exports.getCmsDetails = async (req) => {
 
     const data = await db.Page.findOne({
       where: { Id: id }, 
-      attributes: ["Id", "Name", "Slug", "PageTitle", "PageDescription", "MetaTags", "MetaDescription","Platform","IsRelease","Enable"],
+      attributes: [["Id", "id"], ["Name", "name"], ["Slug", "slug"], ["PageTitle", "page_title"], ["PageDescription", "page_description"], ["MetaTags", "meta_tags"], ["MetaDescription", "meta_description"],["Platform","platform"],["IsRelease","is_release"],["CreatedAt","created_at"],["Enable","enable"]],
       raw: true
     });
     if(isEmpty(data)) {
@@ -179,7 +180,7 @@ exports.getCmsDetails = async (req) => {
 
     const versionHistory = await db.VersionHistory.findAll({
       where: { cms_id: id },
-      attributes: ["id", "Title", "Description", "Platform", "IsForce"],
+      attributes: ["id", ["Title", "title"], ["Description", "description"], ["Platform", "platform"], ["IsForce", "is_force"]],
       raw: true
     });
     data.version_history = versionHistory;
@@ -213,7 +214,7 @@ exports.viewCms = async (req) => {
 
      const data = await db.Page.findOne({
       where: { Id: id }, 
-      attributes: ["PageDescription","IsRelease"],
+      attributes: [["PageDescription", "page_description"],["IsRelease","is_release"]],
       raw: true
     });
     if(isEmpty(data)) {
@@ -222,10 +223,10 @@ exports.viewCms = async (req) => {
       return res_arr;
     }
 
-    if(data.IsRelease) {
+    if(data.is_release) {
       const versionHisory = await db.VersionHistory.findAll({
         where: { cms_id: id },
-        attributes: ["id", "Title", "Description", "Platform", "IsForce"],
+        attributes: ["id", ["Title", "title"], ["Description", "description"], ["Platform", "platform"], ["IsForce", "is_force"]],
         raw: true
       });
       data.version_history = versionHisory;

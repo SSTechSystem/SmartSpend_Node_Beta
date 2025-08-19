@@ -7,7 +7,8 @@ const {
   adminAddOrEdit,
   getAdminsData,
   getAdminDetails,
-  adminDelete
+  adminDelete,
+  getRoles
 } = require("../../services/adminServices/adminServices");
 const { validationResult } = require("express-validator");
 
@@ -126,6 +127,21 @@ exports.getAdminDetails = async (req, res) => {
 exports.adminDelete = async (req, res) => {
   try {
     const { statusCode, message, data } = await adminDelete(req);
+    return universalFunction.sendSuccessResponse(
+      res,
+      statusCode,
+      message,
+      data || {}
+    );
+  } catch (error) {
+    console.log("error: ", error);
+    return universalFunction.sendErrorResponse(res, error);
+  }
+};
+
+exports.getRoles = async (req, res) => {
+  try {
+    const { statusCode, message, data } = await getRoles(req);
     return universalFunction.sendSuccessResponse(
       res,
       statusCode,
