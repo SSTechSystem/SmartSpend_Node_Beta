@@ -1,7 +1,7 @@
 module.exports = {
     ApiLog : require('./apilogsModel'),
     Backup : require('./backupsModel'),
-    DriveMaster : require('./driveMasterModel'),
+    DriveMaster : require('./drivemasterModel'),
     Feedback : require('./feedbackModel'),
     Page : require('./pagesModel'),
     RoleMaster : require('./rolemasterModel'),

@@ -132,7 +132,6 @@ exports.addCms = async (req) => {
 
     const cms = await db.Page.create(cmsObj);
     if (version_history && version_history.length > 0) {
-      console.log('version_history: ', version_history);
       const addVersionDetailsPromise = version_history.map((item) => {
         return db.VersionHistory.create({
           cms_id: cms.Id,
@@ -225,9 +224,7 @@ exports.editCms = async (req) => {
     await db.Page.update(cmsObj,{ where: { Id: id } });
     if (version_history && version_history.length > 0) {
       const addVersionDetailsPromise = version_history.map((item) => {
-        console.log('item: ', item);
         const isForceStr = item?.is_force == 1 ? "true" : "false";
-        console.log('isForceStr: ', typeof isForceStr, isForceStr);
 
         return db.VersionHistory.update({
           Title: item.title,
