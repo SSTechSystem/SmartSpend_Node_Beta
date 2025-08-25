@@ -73,7 +73,7 @@ const signInValidation = [
   //     return true;
   //   })
   //   .toLowerCase(),
-  
+
   check("social_type")
     .not()
     .trim()
@@ -151,11 +151,7 @@ const signInValidationForAdmin = [
     .escape()
     .isEmail()
     .withMessage("Invalid Email format"),
-  check("password")
-    .not()
-    .trim()
-    .isEmpty()
-    .withMessage("Password is required")
+  check("password").not().trim().isEmpty().withMessage("Password is required"),
 ];
 
 const updateProfileValidation = [
@@ -190,12 +186,12 @@ const updateProfileValidation = [
   //     }
   //     return true;
   //   })
-    // check("gender")
-    // .optional()
-    // .trim()
-    // .escape()
-    // .isIn(["M", "F", "O"])
-    // .withMessage("Gender must be either 'M', 'F', or 'O'")
+  // check("gender")
+  // .optional()
+  // .trim()
+  // .escape()
+  // .isIn(["M", "F", "O"])
+  // .withMessage("Gender must be either 'M', 'F', or 'O'")
 ];
 
 const adminUpdatePasswordVal = [
@@ -260,6 +256,8 @@ const adminUpdateProfileVal = [
     .withMessage("Phone number is required")
     .trim()
     .escape()
+    .isLength({ min: 10, max: 12 })
+    .withMessage("Phone number must be between 10 and 12 digits")
     .isMobilePhone("any")
     .withMessage("Invalid phone number format"),
 ];
@@ -311,7 +309,7 @@ const validateAdminDetails = async (req, res, next) => {
           .trim()
           .escape()
           .isLength({ min: 6, max: 12 })
-          .withMessage("Password must be between 6 to 12 characters")
+          .withMessage("Password must be between 6 to 12 characters"),
   ];
 
   // Run all validators
@@ -323,7 +321,13 @@ const validateAdminDetails = async (req, res, next) => {
     const firstError = errors.array({ onlyFirstError: true })[0];
     return res
       .status(400)
-      .send({ statusCode: 400, success: false, type: "Error", message: firstError.msg, data: {} });
+      .send({
+        statusCode: 400,
+        success: false,
+        type: "Error",
+        message: firstError.msg,
+        data: {},
+      });
   }
 
   next();

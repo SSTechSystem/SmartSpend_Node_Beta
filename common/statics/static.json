@@ -170,7 +170,8 @@
     "admin_details": "Admin details get successfully",
     "admin_details_updated": "Admin details has been updated successfully",
     "admin_deleted": "Admin has been deleted successfully",
-    "role_list": "Role list get successfully"
+    "role_list": "Role list get successfully",
+    "admin_already_exists": "Admin already registered with the provided details"
   },
   "file_extension": {
     "jpg": ".jpg",

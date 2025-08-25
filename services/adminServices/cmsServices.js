@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const constant = require("../../common/constant/constant.json");
 const common = require("../../common/statics/static.json");
 const db = require("../../models/index");
@@ -66,7 +66,11 @@ exports.getCmsData = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -82,8 +86,8 @@ exports.addCms = async (req) => {
       name,
       title,
       description = "",
-      meta_tags,
-      meta_description,
+      meta_tags = "",
+      meta_description = "",
       is_release = false,
       version_history = [],
     } = req.body;
@@ -109,8 +113,8 @@ exports.addCms = async (req) => {
     const cmsData = await db.Page.findOne({ where: criteria });
 
     if (cmsData) {
-      res_arr.statusCode = common.response_status_code.success;
-      res_arr.type = common.response_type.success;
+      res_arr.statusCode = common.response_status_code.bad_request;
+      res_arr.type = common.response_type.error;
       res_arr.message = common.response_msg.already_cms_exist;
       return res_arr;
     }
@@ -127,13 +131,15 @@ exports.addCms = async (req) => {
     };
 
     const cms = await db.Page.create(cmsObj);
-    if (version_history && version_history?.lenth > 0) {
+    if (version_history && version_history.length > 0) {
+      console.log('version_history: ', version_history);
       const addVersionDetailsPromise = version_history.map((item) => {
         return db.VersionHistory.create({
+          cms_id: cms.Id,
           Title: item.title,
           Description: item.description,
           Platform: item.platform,
-          IsForce: item?.is_force ?? false ? item.is_force : false,
+          IsForce: item?.is_force ? String(item.is_force) : 'false',
           PageId: cms.Id,
           CreatedBy: Id,
         });
@@ -147,7 +153,11 @@ exports.addCms = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -163,9 +173,9 @@ exports.editCms = async (req) => {
       id,
       name,
       title,
-      description,
-      meta_tags,
-      meta_description,
+      description = "",
+      meta_tags = "",
+      meta_description = "",
       is_release = false,
       version_history = [],
     } = req.body;
@@ -191,12 +201,12 @@ exports.editCms = async (req) => {
         .replace(/[^a-z0-9-]/g, "");
     const slug = createSlug(name);
 
-    const criteria = { Slug: slug, Enable: true };
+    const criteria = { Slug: slug, Enable: true, Id: { [Op.ne]: id } };
     const cmsData = await db.Page.findOne({ where: criteria });
 
     if (cmsData) {
-      res_arr.statusCode = common.response_status_code.success;
-      res_arr.type = common.response_type.success;
+      res_arr.statusCode = common.response_status_code.bad_request;
+      res_arr.type = common.response_type.error;
       res_arr.message = common.response_msg.already_cms_exist;
       return res_arr;
     }
@@ -213,13 +223,17 @@ exports.editCms = async (req) => {
     };
 
     await db.Page.update(cmsObj,{ where: { Id: id } });
-    if (version_history && version_history?.lenth > 0) {
+    if (version_history && version_history.length > 0) {
       const addVersionDetailsPromise = version_history.map((item) => {
+        console.log('item: ', item);
+        const isForceStr = item?.is_force == 1 ? "true" : "false";
+        console.log('isForceStr: ', typeof isForceStr, isForceStr);
+
         return db.VersionHistory.update({
           Title: item.title,
           Description: item.description,
           Platform: item.platform,
-          IsForce: item?.is_force ?? false ? item.is_force : false,
+          IsForce: isForceStr,
           UpdatedBy: Id,
         },{ 
           where: { Id: id }
@@ -234,7 +248,11 @@ exports.editCms = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -297,7 +315,11 @@ exports.getCmsDetails = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -355,7 +377,11 @@ exports.viewCms = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -375,6 +401,7 @@ exports.deleteCms = async (req) => {
       return res_arr;
     }
 
+    await db.VersionHistory.destroy({ where: { cms_id: id } });
     await db.Page.destroy({ where: { Id: id } });
 
     res_arr.statusCode = common.response_status_code.success;
@@ -383,7 +410,11 @@ exports.deleteCms = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };
 
@@ -414,6 +445,10 @@ exports.deleteVersionHistory = async (req) => {
     return res_arr;
   } catch (error) {
     console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
   }
 };

@@ -2,7 +2,7 @@ const db = require("../../models/index");
 const constant = require("../../common/constant/constant.json");
 const common = require("../../common/statics/static.json");
 const smartspendDB = require("../../config/dbconfig");
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const moment = require("moment");
 const generatePassword = require("../../common/helper/generateEncryptedPassword");
 const { isEmpty } = require("../../common/utils/utils");
@@ -143,14 +143,17 @@ exports.getCustomersData = async (req) => {
       ],
       ...options,
       raw: true,
-      nest: true
+      nest: true,
     });
 
     const totalPages = Math.ceil(data.count / limit);
     data.customer_details = data.rows.map((customer) => {
       if (customer.Role && customer.Role.role_id === constant.ROLE.APP_USER) {
         customer.Role.role_name = "Registered User";
-      } else if (customer.Role && customer.Role.role_id === constant.ROLE.APP_GUEST_USER) {
+      } else if (
+        customer.Role &&
+        customer.Role.role_id === constant.ROLE.APP_GUEST_USER
+      ) {
         customer.Role.role_name = "Guest User";
       }
       return customer;
@@ -210,10 +213,10 @@ exports.getFeedbacksData = async (req) => {
       attributes: [
         ["Id", "id"],
         ["Name", "name"],
-        ["Email", "email"],        
+        ["Email", "email"],
         ["AppExperience", "app_experience"],
         ["Message", "message"],
-        ["IsRead", "is_read"],        
+        ["IsRead", "is_read"],
         ["CreatedAt", "created_at"],
       ],
       order: [[sortby, order_type]],
@@ -273,12 +276,21 @@ exports.getBackupsData = async (req) => {
 
     const data = await db.Backup.findAndCountAll({
       where: query,
-      attributes: [["Id", "id"], ["BackupFileName", "backup_file_name"], ["CreatedAt", "created_at"], ["UpdatedAt", "updated_at"], ["Enable", "enable"]],
+      attributes: [
+        ["Id", "id"],
+        ["BackupFileName", "backup_file_name"],
+        ["CreatedAt", "created_at"],
+        ["UpdatedAt", "updated_at"],
+        ["Enable", "enable"],
+      ],
       include: [
         {
           model: db.UserMaster,
           as: "user",
-          attributes: [["Name", "name"], ["Email", "email"]],
+          attributes: [
+            ["Name", "name"],
+            ["Email", "email"],
+          ],
         },
       ],
       order: [[sortby, order_type]],
@@ -320,6 +332,31 @@ exports.adminAddOrEdit = async (req) => {
       type: common.response_type.error,
       data: {},
     };
+    if (req.method != "POST" && !req.body.id) {
+      return {
+        statusCode: common.response_status_code.bad_request,
+        type: common.response_type.error,
+        message: common.response_msg.id_required,
+      };
+    }
+
+    const adminExists = await db.UserMaster.findOne({
+      where: {
+        [Op.or]: [{ Name: name }, { Email: email }, { Phone: phone }],
+        ...(req.method !== "POST" && req.body.id
+          ? { Id: { [Op.ne]: req.body.id } }
+          : {}),
+      },
+      raw: true,
+    });
+    if (!isEmpty(adminExists)) {
+      return {
+        statusCode: common.response_status_code.bad_request,
+        type: common.response_type.error,
+        message: common.response_msg.admin_already_exists,
+      };
+    }
+
     const adminData = {
       Name: name,
       Email: email,
@@ -337,13 +374,6 @@ exports.adminAddOrEdit = async (req) => {
       res_arr.type = common.response_type.success;
       res_arr.message = common.response_msg.new_admin_added;
     } else {
-      if (!req.body.id) {
-        return {
-          statusCode: common.response_status_code.bad_request,
-          type: common.response_type.error,
-          message: common.response_msg.id_required,
-        };
-      }
       await db.UserMaster.update(adminData, {
         where: {
           Id: req.body.id,
@@ -380,7 +410,7 @@ exports.getAdminsData = async (req) => {
     order_type = order_type || "DESC";
     let query = {
       RoleId: constant.ROLE.ADMIN,
-      Enable: 1,
+      // Enable: 1,
     };
 
     const options = {
@@ -463,7 +493,13 @@ exports.getAdminDetails = async (req) => {
 
     const data = await db.UserMaster.findOne({
       where: query,
-      attributes: [["Id", "id"], ["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["Enable", "enable"]],
+      attributes: [
+        ["Id", "id"],
+        ["Name", "name"],
+        ["Email", "email"],
+        ["Phone", "phone"],
+        ["Enable", "enable"],
+      ],
       raw: true,
     });
 
@@ -506,9 +542,9 @@ exports.adminDelete = async (req) => {
         type: common.response_type.error,
         message: common.response_msg.incorrect_params,
       };
-    };
+    }
 
-    await db.UserMaster.update({ Enable: false }, { where: { Id: id } });
+    await db.UserMaster.destroy({ where: { Id: id } });
 
     res_arr.statusCode = common.response_status_code.success;
     res_arr.type = common.response_type.success;
