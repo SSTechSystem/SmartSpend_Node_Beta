@@ -28,9 +28,8 @@ const VersionHistory = smartspendDB.define(
       type: DataTypes.INTEGER,
     },
     IsForce: {
-      type: DataTypes.STRING(5),
-      allowNull: false,
-      defaultValue: "false",
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
     },
     created_at: {
       type: DataTypes.DATE,

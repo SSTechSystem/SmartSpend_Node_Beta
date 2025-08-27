@@ -138,9 +138,8 @@ exports.addCms = async (req) => {
           Title: item.title,
           Description: item.description,
           Platform: item.platform,
-          IsForce: item?.is_force ? String(item.is_force) : 'false',
-          PageId: cms.Id,
-          CreatedBy: Id,
+          IsForce: item.is_force,
+          created_by: Id,
         });
       });
       await Promise.all(addVersionDetailsPromise);
@@ -221,24 +220,36 @@ exports.editCms = async (req) => {
       UpdatedBy: Id,
     };
 
-    await db.Page.update(cmsObj,{ where: { Id: id } });
-    if (version_history && version_history.length > 0) {
-      const addVersionDetailsPromise = version_history.map((item) => {
-        const isForceStr = item?.is_force == 1 ? "true" : "false";
-
-        return db.VersionHistory.update({
-          Title: item.title,
-          Description: item.description,
-          Platform: item.platform,
-          IsForce: isForceStr,
-          UpdatedBy: Id,
-        },{ 
-          where: { Id: id }
-        });
-      });
-      await Promise.all(addVersionDetailsPromise);
+    await db.Page.update(cmsObj, { where: { Id: id } });
+    if (Array.isArray(version_history) && version_history.length > 0) {
+      const versionOps = version_history
+        .filter(
+          (item) => item && (item.is_updated === 1 || item.is_created === 1)
+        )
+        .map((item) => {
+          const baseData = {
+            Title: item.title,
+            Description: item.description,
+            Platform: item.platform,
+            IsForce: item.is_force,
+            cms_id: id,
+          };
+          if (item.is_updated === 1 && item.id) {
+            return db.VersionHistory.update(
+              { ...baseData, UpdatedBy: Id },
+              { where: { id: item.id } }
+            );
+          } else if (item.is_created === 1) {
+            return db.VersionHistory.create({
+              ...baseData,
+              CreatedBy: Id,
+            });
+          }
+          return null;
+        })
+        .filter(Boolean);
+      await Promise.all(versionOps);
     }
-
     res_arr.statusCode = common.response_status_code.success;
     res_arr.type = common.response_type.success;
     res_arr.message = common.response_msg.cms_updated_successfully;
