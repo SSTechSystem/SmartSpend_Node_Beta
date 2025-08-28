@@ -343,6 +343,7 @@ exports.adminAddOrEdit = async (req) => {
     const adminExists = await db.UserMaster.findOne({
       where: {
         [Op.or]: [{ Name: name }, { Email: email }, { Phone: phone }],
+        RoleId: { [Op.eq]: constant.ROLE.ADMIN },
         ...(req.method !== "POST" && req.body.id
           ? { Id: { [Op.ne]: req.body.id } }
           : {}),
