@@ -333,6 +333,27 @@ const validateAdminDetails = async (req, res, next) => {
   next();
 };
 
+const userSkipVal = [
+  check("CurrencyCountry")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencyCountry is required")
+    .trim()
+    .escape(),
+  check("CurrencyCode")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencyCode is required")
+    .trim()
+    .escape(),
+  check("CurrencySymbol")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencySymbol is required")
+    .trim()
+    .escape()
+];
+
 module.exports = {
   signUpValidation,
   signInValidation,
@@ -343,4 +364,5 @@ module.exports = {
   adminUpdatePasswordVal,
   adminUpdateProfileVal,
   validateAdminDetails,
+  userSkipVal
 };

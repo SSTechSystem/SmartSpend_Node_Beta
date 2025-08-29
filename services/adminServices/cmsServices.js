@@ -90,6 +90,7 @@ exports.addCms = async (req) => {
       meta_description = "",
       is_release = false,
       version_history = [],
+      enable = true,
     } = req.body;
     const { Id } = req.userProfile;
 
@@ -128,6 +129,7 @@ exports.addCms = async (req) => {
       MetaDescription: meta_description || null,
       IsRelease: is_release,
       CreatedBy: Id,
+      Enable: enable,
     };
 
     const cms = await db.Page.create(cmsObj);
@@ -176,6 +178,7 @@ exports.editCms = async (req) => {
       meta_description = "",
       is_release = false,
       version_history = [],
+      enable = true,
     } = req.body;
     const { Id } = req.userProfile;
 
@@ -218,6 +221,7 @@ exports.editCms = async (req) => {
       MetaDescription: meta_description || null,
       IsRelease: is_release,
       UpdatedBy: Id,
+      Enable: enable,
     };
 
     await db.Page.update(cmsObj, { where: { Id: id } });

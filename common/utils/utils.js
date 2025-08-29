@@ -380,3 +380,11 @@ exports.removeDuplicateToken = async (token) => {
     throw error;
   }
 };
+
+exports.getDeviceType = (userAgent = "") => {
+  const ua = String(userAgent).toLowerCase();
+  if (ua.includes("windows")) return "WINDOWS";
+  if (ua.includes("iphone") || ua.includes("ios")) return "IOS";
+  if (ua.includes("android")) return "ANDROID";
+  return "OTHER";
+};

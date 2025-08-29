@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-// const appRoutes = require('./appRoutes');
+const appRoutes = require('./appRoutes');
 const adminRoutes = require('./adminRoutes');
 
-// router.use('/app_api', appRoutes);
+router.use('/app_api', appRoutes);
 
 router.use('/admin_api', adminRoutes);
 
