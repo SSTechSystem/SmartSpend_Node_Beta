@@ -1,6 +1,6 @@
 const path = require("path");
 const constant = require("../constant/constant.json");
-const { roles } = require("../statics/static.json");
+const { ROLE } = require("../constant/constant.json");
 // const CryptoJS = require("crypto-js");
 // const SECRET_KEY = constant.CHAT_ENCRYPT_DATA_SECRET_KEY;
 const db = require("../../models/index");
@@ -106,108 +106,6 @@ exports.idGenerator = (length = 6) => {
   return result;
 };
 
-// Function to clean request query data
-exports.cleanQuery = (data) => {
-  // Check if data is an object
-  if (typeof data !== "object" || data === null) {
-    return data;
-  }
-
-  // Iterate through the object properties
-  for (const key in data) {
-    if (Object.prototype.hasOwnProperty.call(data, key)) {
-      // Remove properties with null, "", {}, or undefined values
-      if (
-        data[key] === null ||
-        data[key] === "" ||
-        (typeof data[key] === "object" &&
-          Object.keys(data[key]).length === 0) ||
-        data[key] === undefined
-      ) {
-        delete data[key];
-      }
-    }
-  }
-
-  return data;
-};
-
-// Function to sort permissions object keys
-exports.transformedPermData_orig = (perm_data) => {
-  var transformed_data = {};
-  perm_data.forEach((item) => {
-    var { module_name, name, key } = item;
-    module_name = module_name.toLowerCase();
-    module_name = module_name.replaceAll(" ", "_");
-    if (!transformed_data[module_name]) {
-      transformed_data[module_name] = {};
-    }
-    transformed_data[module_name][name.toLowerCase()] = key;
-  });
-
-  const permissionOrder = ["add", "edit", "delete", "view"];
-  const sortedPermissions = {};
-
-  for (const module in transformed_data) {
-    if (transformed_data.hasOwnProperty(module)) {
-      const modulePermissions = transformed_data[module];
-      const sortedModulePermissions = {};
-
-      permissionOrder.forEach((permission) => {
-        if (modulePermissions.hasOwnProperty(permission)) {
-          sortedModulePermissions[permission] = modulePermissions[permission];
-        }
-      });
-
-      sortedPermissions[module] = sortedModulePermissions;
-    }
-  }
-
-  return sortedPermissions;
-};
-
-// Function to sort permissions object keys
-exports.transformedPermData = (perm_data, sort = "") => {
-  // Define the desired order of action keys
-  const actionOrder = ["add", "edit", "delete", "view"];
-
-  // Convert the input array to the desired structure with sorted action keys
-  const transformedData = perm_data.reduce((result, item) => {
-    const { name, key, ...rest } = item;
-    const module_name = item.admin_module.name;
-    var formattedModuleName = module_name.replace(/\s+/g, "_").toLowerCase();
-    const actionKey = name.toLowerCase();
-    if (!result[formattedModuleName]) {
-      result[formattedModuleName] = {};
-    }
-    result[formattedModuleName][actionKey] = key;
-
-    if (sort) {
-      const sortedPermissions = {};
-      for (const module in result) {
-        if (result.hasOwnProperty(module)) {
-          const modulePermissions = result[module];
-          const sortedModulePermissions = {};
-
-          actionOrder.forEach((permission) => {
-            if (modulePermissions.hasOwnProperty(permission)) {
-              sortedModulePermissions[permission] =
-                modulePermissions[permission];
-            }
-          });
-
-          sortedPermissions[module] = sortedModulePermissions;
-        }
-      }
-      result = sortedPermissions;
-    }
-
-    return result;
-  }, {});
-
-  return transformedData;
-};
-
 // Function to generate random numeric string for OTP
 exports.generateOTP = () => {
   const otpLength = 4; // Define the length of the OTP (e.g., 6 digits)
@@ -236,8 +134,7 @@ exports.generateRandomPassword = (length) => {
 };
 
 exports.role_arr = () => {
-  // const auth_arr = [roles.COMPANY_ADMIN, roles.ACCOUNT_ADMIN, roles.COMPANY_STANDARD, roles.ACCOUNT_STANDARD];
-  const auth_arr = [roles.COMPANY_ADMIN, roles.ACCOUNT_ADMIN];
+  const auth_arr = [ROLE.ADMIN, ROLE.APP_GUEST_USER, ROLE.APP_USER];
   return auth_arr;
 };
 
@@ -263,38 +160,6 @@ exports.convertDateToYYYYMMDD = (date) => {
   const month = String(parsedDate.getMonth() + 1).padStart(2,'0');
   const day = String(parsedDate.getDate()).padStart(2,'0');
   return `${year}-${month}-${day}`;
-};
-
-// Function to encrypt a message
-// exports.encryptMessage = (message) => {
-//   if (message) {
-//     return CryptoJS.AES.encrypt(message, SECRET_KEY).toString();
-//   }
-//   return "";
-// };
-
-// Function to decrypt a message
-// exports.decryptMessage = (encryptedMessage) => {
-//   if (encryptedMessage) {
-//     const bytes = CryptoJS.AES.decrypt(encryptedMessage, SECRET_KEY);
-//     return bytes.toString(CryptoJS.enc.Utf8);
-//   }
-//   return "";
-// };
-
-exports.isUserAvailable = async (senderId, receiverId) => {
-  try {
-    const count = await db.ContactMaster.count({
-      where: {
-        UserId: senderId,
-        BlockedId: { [Op.like]: `%${receiverId}%` },
-      },
-    });
-    return count === 0;
-  } catch (error) {
-    console.log("error in isUserAvailable function :", error);
-    throw error;
-  }
 };
 
 exports.enhanceGoogleProfilePic = async (url, size = 250, uploadDir = path.join(path.resolve('./uploads/profiles'))) => {
@@ -387,4 +252,19 @@ exports.getDeviceType = (userAgent = "") => {
   if (ua.includes("iphone") || ua.includes("ios")) return "IOS";
   if (ua.includes("android")) return "ANDROID";
   return "OTHER";
+};
+
+exports.readHTMLFile = (path, callback) => {
+  try {
+    fs.readFile(path, { encoding: "utf-8" }, (err, html) => {
+      if (err) {
+        throw err;
+      } else {
+        callback(null, html);
+      }
+    });
+  } catch (error) {
+    console.log("Error in reading HTML file:", error);
+    callback(error);
+  }
 };

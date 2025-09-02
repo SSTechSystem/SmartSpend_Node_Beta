@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartSpend: One-Time Login Code</title>
+</head>
+
+<body style="margin: 0; font-family: 'Roboto', Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div class="container" style="background-color: #359dff; text-align: center; width: 100%; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); overflow: hidden; height: fit-content;">
+    
+        <!-- Header -->
+        <div class="header" style="background-color: #359dff; text-align: center;">
+            <img src="{{LOGO_IMG}}" alt="Logo" style="width: 132px; height: 100px;">
+        </div>
+
+        <!-- Content -->
+        <div class="content" style="padding: 20px; background-color: #ffffff; border-radius: 16px 16px 0 0; text-align: center; box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.1); overflow: hidden;">
+       
+            <h1 style="font-size: 28px; color: #359dff; margin: 46px 0 2px 0; font-weight: bold;">One-Time Login Code</h1>
+            
+            <!-- <p style="line-height: 1.4; margin: 0; color: #636363; font-size: 14px;">Your Email Verification Code is</p> -->
+
+            <!-- Code Container -->
+            <div class="code" style="font-size: 38px; font-weight: bold; color: #ffffff; display: inline-block; letter-spacing: 8px; background-color: #359dff; border-radius: 8px; padding: 10px 12px 6px 20px; margin: 20px auto; max-width: 90%; box-sizing: border-box; white-space: nowrap; overflow-wrap: break-word;">
+                {{USER_OTP}}
+            </div>
+
+            <p style="line-height: 1.4; margin: 0; color: #636363; font-size: 14px;">
+                <!-- Use this one-time code to confirm your account in the app. -->
+                Use this one-time code to confirm your account in the app.<br>The code will remain active for 1 minute.<br/><br/>If you didn’t request this, please ignore this email.
+                <!-- <br>The code will remain active for 1 minute. -->
+            </p>
+
+            <!-- Footer -->
+            <div class="footer" style="font-size: 14px; color: #636363; background-color: #ffffff; margin-top: 10px;">
+                Need Help? Contact us at 
+                <a href="mailto:{{INQUIRY_EMAIL}}" style="color: #359dff; font-weight: bold; text-decoration: none;">{{INQUIRY_EMAIL}}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

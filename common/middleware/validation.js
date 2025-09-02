@@ -354,6 +354,120 @@ const userSkipVal = [
     .escape()
 ];
 
+const userAuthVal = [
+  check("Id")
+    .not()
+    .isEmpty()
+    .withMessage("Id is required")
+    .trim()
+    .isNumeric()
+    .withMessage("Id must be numeric"),
+  check("ForgotEmailToken")
+    .not()
+    .isEmpty()
+    .withMessage("ForgotEmailToken is required")
+    .trim()
+];
+
+const newUserSubmitVal = [
+  check("Email")
+    .optional({ nullable: true })
+    .isEmail()
+    .withMessage("Invalid email format")
+    .trim(),
+  check("login_with")
+    .optional()
+    .isIn(["gmail","default"])
+    .withMessage("Invalid login type"),
+  check("CurrencyCountry")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencyCountry is required")
+    .trim(),
+  check("CurrencyCode")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencyCode is required")
+    .trim(),
+  check("CurrencySymbol")
+    .not()
+    .isEmpty()
+    .withMessage("CurrencySymbol is required")
+    .trim(),
+  check("DeviceType")
+    .optional()
+    .isIn(["IOS", "ANDROID", "WINDOWS", "OTHER"])
+    .withMessage("Invalid device type")
+];
+
+const updateUserDataVal = [
+  check("Email")
+    .optional()
+    .isEmail()
+    .withMessage("Invalid email format")
+    .trim(),
+  check("Phone")
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 12 })
+    .withMessage("Phone number must be between 10 and 12 digits"),
+  check("OpeningBalance")
+    .optional()
+    .isNumeric()
+    .withMessage("Opening balance must be numeric"),
+  check("CarryForward")
+    .optional()
+    .isIn(["0", "1"])
+    .withMessage("Carry forward must be 0 or 1"),
+  check("Theme")
+    .optional()
+    .matches(/^[0-9A-F]{6}$/i)
+    .withMessage("Theme must be a valid hex color code"),
+  check("DateFormat")
+    .optional()
+    .isIn(["dd-MM-yyyy", "MM-dd-yyyy", "yyyy-MM-dd"])
+    .withMessage("Invalid date format"),
+]
+
+const feedbackValidation = [
+  body('Name')
+    .notEmpty()
+    .withMessage('Name field is required.')
+    .trim()
+    .escape(),
+  body('Email')
+    .notEmpty()
+    .withMessage('Email field is required.')
+    .isEmail()
+    .withMessage('Invalid Email format')
+    .normalizeEmail(),
+  body('UserId')
+    .notEmpty()
+    .withMessage('UserId field is required.')
+    .isNumeric()
+    .withMessage('Only digit allowed in UserId Field.')
+    .trim(),
+  body('AppExperience')
+    .notEmpty()
+    .withMessage('AppExperience field is required.')
+    .trim()
+    .escape(),
+  body('Message')
+    .notEmpty()
+    .withMessage('Message field is required.')
+    .trim()
+    .escape()
+];
+
+const versionHistoryValidation = [
+  body('Platform')
+    .notEmpty()
+    .withMessage('Platform field is required.')
+    .isIn(['0', '1'])
+    .withMessage('Platform must be either 0 (iOS) or 1 (Android)')
+    .trim()
+];
+
 module.exports = {
   signUpValidation,
   signInValidation,
@@ -364,5 +478,10 @@ module.exports = {
   adminUpdatePasswordVal,
   adminUpdateProfileVal,
   validateAdminDetails,
-  userSkipVal
+  userSkipVal,
+  userAuthVal,
+  newUserSubmitVal,
+  updateUserDataVal,
+  feedbackValidation,
+  versionHistoryValidation
 };

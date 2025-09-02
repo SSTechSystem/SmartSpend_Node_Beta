@@ -4,8 +4,10 @@ const cors = require('cors');
 require('dotenv').config();
 require('./config/dbconfig');
 const routes = require('./routes/index');
+const path = require('path');
 const app = express();
 
+app.use("/public", express.static(path.join("./public")));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(
