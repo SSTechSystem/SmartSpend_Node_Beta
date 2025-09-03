@@ -6,11 +6,13 @@ const validation = require('../common/middleware/validation');
 const { profileUpload } = require('../common/helper/multerHelper');
 const route = express.Router();
 
-route.get('/country/countrylist',verifyToken([ROLE.APP_GUEST_USER,ROLE.APP_USER]), appControllers.getCountryList);
+route.get('/country/countrylist', appControllers.getCountryList);
 
 route.post('/users/user_skip', validation.userSkipVal, appControllers.userSkip);
 
 route.post('/users/user_authorization', validation.userAuthVal, appControllers.userAuthorization);
+
+route.post('/users/resend_otp', appControllers.resendOtp);
 
 route.post('/users/new_user_submit', validation.newUserSubmitVal, appControllers.newUserSubmit);
 

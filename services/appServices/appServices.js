@@ -2,7 +2,7 @@ const db = require("../../models/index");
 const countries = require("../../common/constant/countries.json");
 const constant = require("../../common/constant/constant.json");
 const common = require("../../common/statics/static.json");
-const { generateToken } = require("../../common/helper/auth");
+// const { generateToken } = require("../../common/helper/auth");
 const {
   isEmpty,
   getDeviceType,
@@ -11,18 +11,20 @@ const {
   enhanceGoogleProfilePic,
 } = require("../../common/utils/utils");
 const { OAuth2Client } = require("google-auth-library");
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(constant.GOOGLE_CLIENT_ID.CLIENT_ID);
 const handlebars = require("handlebars");
 const path = require("path");
 const { sendMail } = require("../../common/utils/sendEmail");
 const smartspendDB = require("../../config/dbconfig");
+const { QueryTypes } = require("sequelize");
+const moment = require("moment");
 
 //** Helper functions - START **//
 const handleGmailAuth = async (id_token) => {
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: constant.GOOGLE_CLIENT_ID.CLIENT_ID,
     });
     const payload = ticket.getPayload();
     const gmailData = {
@@ -211,17 +213,17 @@ exports.userSkip = async (req) => {
       UserAgent: userAgent,
     };
 
-    const created = await db.UserMaster.create(usermaster_data);
+    const createdUser = await db.UserMaster.create(usermaster_data);
 
     if (!createdUser?.Id) {
       throw new Error("User data insertion failed");
     }
 
-    const token = await generateToken({ Id: created.Id });
-    await db.UserMaster.update(
-      { AuthToken: token },
-      { where: { Id: created.Id } }
-    );
+    // const token = await generateToken({ Id: createdUser.Id });
+    // await db.UserMaster.update(
+    //   { AuthToken: token },
+    //   { where: { Id: createdUser.Id } }
+    // );
 
     const responseData = {
       Id: createdUser.Id,
@@ -230,7 +232,7 @@ exports.userSkip = async (req) => {
       CurrencyCode: createdUser.CurrencyCode,
       CurrencySymbol: createdUser.CurrencySymbol,
       DeviceType: createdUser.DeviceType,
-      AuthToken: token,
+      // AuthToken: token,
     };
 
     res_arr.statusCode = common.response_status_code.success;
@@ -299,10 +301,10 @@ exports.userAuthorization = async (req) => {
       return res_arr;
     }
 
-    const currentTime = new Date();
+    const currentTime = moment();
     if (
       userData.ForgotEmailToken !== ForgotEmailToken ||
-      new Date(userData.expire_email_token) <= currentTime
+      moment(userData.expire_email_token).isSameOrBefore(currentTime)
     ) {
       res_arr.statusCode = common.response_status_code.unauthorized;
       res_arr.type = common.response_type.error;
@@ -465,8 +467,7 @@ exports.getUserData = async (req) => {
     };
 
     const { Id } = req.body;
-
-    if (!Id) {
+    if (isEmpty(Id)) {
       res_arr.message = common.response_msg.id_required;
       return res_arr;
     }
@@ -512,7 +513,7 @@ exports.updateUserData = async (req) => {
 
     const { Id, ...updateFields } = req.body;
 
-    if (!Id) {
+    if (isEmpty(Id)) {
       res_arr.message = common.response_msg.id_required;
       return res_arr;
     }
@@ -711,11 +712,10 @@ exports.logout = async (req) => {
       return res_arr;
     }
 
-    // Update user to clear auth token
     await db.UserMaster.update(
       {
-        AuthToken: null, // Clear the auth token
-        LastLogoutAt: new Date(), // Track last logout time
+        // AuthToken: null, // Clear the auth token
+        LastLogin: new Date(), // Track last login time
       },
       {
         where: { Id },
@@ -746,11 +746,20 @@ exports.getVersionHistory = async (req) => {
 
     const { Platform } = req.body;
 
-    const versionHistory = await db.VersionHistory.findAll({
-      where: { Platform },
-      order: [["CreatedAt", "DESC"]],
-      raw: true,
-    });
+    const versionHistory = await smartspendDB.query(
+      `SELECT vh.*, pg.Id as page_id 
+       FROM version_history vh 
+       INNER JOIN pages pg ON vh.cms_id = pg.Id 
+       WHERE vh.Platform = ? 
+         AND pg.IsRelease = 1 
+         AND pg.Enable = 1 
+       ORDER BY vh.created_at DESC`,
+      {
+        replacements: [Platform],
+        type: QueryTypes.SELECT,
+        raw: true,
+      }
+    );
 
     if (isEmpty(versionHistory)) {
       res_arr.statusCode = common.response_status_code.not_found;
@@ -761,15 +770,14 @@ exports.getVersionHistory = async (req) => {
       };
       return res_arr;
     }
+
     const transformedData = versionHistory.map((version) => ({
-      ...version,
+      cms_id: version.cms_id,
+      Description: version.Description,
+      IsForce: version.IsForce,
       VersionNumber: version.Title,
       Platform: version.Platform === 1 ? "Android" : "Ios",
     }));
-
-    transformedData.forEach((version) => {
-      delete version.Title;
-    });
 
     res_arr.statusCode = common.response_status_code.success;
     res_arr.message = common.response_msg.version_history_get;
@@ -777,6 +785,51 @@ exports.getVersionHistory = async (req) => {
       totalcount: transformedData.length,
       versionhistory: transformedData,
     };
+    return res_arr;
+  } catch (error) {
+    console.error("error: ", error);
+    return {
+      statusCode: common.response_status_code.internal_error,
+      type: common.response_type.error,
+      message: common.response_msg.catch_error,
+    };
+  }
+};
+
+exports.resendOtp = async (req) => {
+  try {
+    const res_arr = {
+      statusCode: common.response_status_code.bad_request,
+      type: common.response_type.error,
+      data: {},
+    };
+
+    const { Id } = req.body;
+    if (isEmpty(Id)) {
+      res_arr.message = common.response_msg.id_required;
+      return res_arr;
+    }
+
+    const userData = await db.UserMaster.findOne({ where: { Id } });
+    if (isEmpty(userData)) {
+      res_arr.message = common.response_msg.user_not_found;
+      return res_arr;
+    }
+
+    const otp = generateOTP();
+    userData.ForgotEmailToken = otp;
+    await userData.save();
+    const emailError = await sendVerificationEmail(userData.Email, otp);
+    if (emailError) {
+      return {
+        ...res_arr,
+        message: common.response_msg.something_went_wrong_while_sending_email,
+      };
+    }
+
+    res_arr.statusCode = common.response_status_code.success;
+    res_arr.type = common.response_type.success;
+    res_arr.message = common.response_msg.otp_sent;
     return res_arr;
   } catch (error) {
     console.error("error: ", error);

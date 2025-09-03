@@ -13,6 +13,10 @@
     "success": "Success",
     "error": "Error"
   },
+  "response_success": {
+    "true": true,
+    "false": false
+  },
   "response_msg": {
     "common_error": "Something went wrong, please try again later",
     "catch_error": "Something went wrong",
@@ -70,7 +74,8 @@
     "feedback_submitted": "Feedback submitted successfully",
     "logout_success": "You have successfully Logged out",
     "version_history_not_found": "Version history not found",
-    "version_history_get": "Version history get successfully"
+    "version_history_get": "Version history get successfully",
+    "otp_sent": "OTP has been sent successfully"
   },
   "file_extension": {
     "jpg": ".jpg",

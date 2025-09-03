@@ -7,9 +7,10 @@ const routes = require('./routes/index');
 const path = require('path');
 const app = express();
 
-app.use("/public", express.static(path.join("./public")));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use("/public", express.static(path.join("./public")));
+app.use("/uploads", express.static(path.join("./uploads")));
 app.use(
   cors({
     origin: "*",

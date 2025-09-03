@@ -248,10 +248,10 @@ exports.removeDuplicateToken = async (token) => {
 
 exports.getDeviceType = (userAgent = "") => {
   const ua = String(userAgent).toLowerCase();
-  if (ua.includes("windows")) return "WINDOWS";
-  if (ua.includes("iphone") || ua.includes("ios")) return "IOS";
-  if (ua.includes("android")) return "ANDROID";
-  return "OTHER";
+  if (ua.includes("windows")) return "Windows";
+  if (ua.includes("iphone") || ua.includes("ios")) return "iOS";
+  if (ua.includes("android")) return "Android";
+  return "Other";
 };
 
 exports.readHTMLFile = (path, callback) => {

@@ -396,11 +396,18 @@ const newUserSubmitVal = [
     .trim(),
   check("DeviceType")
     .optional()
-    .isIn(["IOS", "ANDROID", "WINDOWS", "OTHER"])
+    .isIn(["iOS", "Android"])
     .withMessage("Invalid device type")
 ];
 
 const updateUserDataVal = [
+  check("Id")
+    .not()
+    .isEmpty()
+    .withMessage("Id is required")
+    .trim()
+    .isNumeric()
+    .withMessage("Id must be numeric"),
   check("Email")
     .optional()
     .isEmail()

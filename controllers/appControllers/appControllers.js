@@ -9,7 +9,9 @@ const {
   updateProfile,
   deleteProfile,
   feedbackAdd,
-  getVersionHistory
+  getVersionHistory,
+  logout,
+  resendOtp
 } = require("../../services/appServices/appServices");
 const { validationResult } = require("express-validator");
 
@@ -208,6 +210,21 @@ exports.getVersionHistory = async (req, res) => {
       );
     }
     const { statusCode, message, data } = await getVersionHistory(req);
+    return universalFunction.sendSuccessResponse(
+      res,
+      statusCode,
+      message,
+      data || {}
+    );
+  } catch (error) {
+    console.log("error: ", error);
+    return universalFunction.sendErrorResponse(res, error);
+  }
+};
+
+exports.resendOtp = async (req, res) => {
+  try {
+    const { statusCode, message, data } = await resendOtp(req);
     return universalFunction.sendSuccessResponse(
       res,
       statusCode,
