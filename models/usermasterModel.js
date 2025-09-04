@@ -28,6 +28,7 @@ const UserMaster = smartspendDB.define(
     },
     ForgotEmailToken: {
       type: DataTypes.STRING(50),
+      defaultValue: null,
     },
     PurposeOfProfile: {
       type: DataTypes.STRING(255),

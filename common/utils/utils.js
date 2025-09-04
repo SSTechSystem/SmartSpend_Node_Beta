@@ -1,11 +1,8 @@
 const path = require("path");
 const constant = require("../constant/constant.json");
 const { ROLE } = require("../constant/constant.json");
-// const CryptoJS = require("crypto-js");
-// const SECRET_KEY = constant.CHAT_ENCRYPT_DATA_SECRET_KEY;
 const db = require("../../models/index");
-const { Op } = require("sequelize");
-// const axios = require("axios");
+const axios = require("axios");
 const fs = require("fs");
 
 // check {},"",undefined,null
@@ -173,7 +170,7 @@ exports.enhanceGoogleProfilePic = async (url, size = 250, uploadDir = path.join(
         editedURL = url;
     }
 
-    const filename = `${Date.now()}_profilepic.jpg`;
+    const filename = this.generateUniqueFileName(`${Date.now()}_profilepic.jpg`);
     const filepath = path.join(uploadDir,filename);
     const success = await downloadImage(editedURL,filepath);
     if(!success) {
@@ -187,27 +184,27 @@ exports.enhanceGoogleProfilePic = async (url, size = 250, uploadDir = path.join(
 };
 
 // Function to download an image using axios and save it to a given filePath
-// async function downloadImage(url, filePath) {
-//   try {
-//       const response = await axios({
-//           url,
-//           method: 'GET',
-//           responseType: 'stream',
-//       });
+async function downloadImage(url, filePath) {
+  try {
+      const response = await axios({
+          url,
+          method: 'GET',
+          responseType: 'stream',
+      });
 
-//       return new Promise((resolve, reject) => {
-//           const writer = fs.createWriteStream(filePath);
-//           response.data.pipe(writer);
-//           writer.on('finish', () => resolve(true));
-//           writer.on('error', (err) => {
-//               fs.unlinkSync(filePath);
-//               reject(err);
-//           });
-//       });
-//   } catch (error) {
-//       return false;
-//   }
-// };
+      return new Promise((resolve, reject) => {
+          const writer = fs.createWriteStream(filePath);
+          response.data.pipe(writer);
+          writer.on('finish', () => resolve(true));
+          writer.on('error', (err) => {
+              fs.unlinkSync(filePath);
+              reject(err);
+          });
+      });
+  } catch (error) {
+      return false;
+  }
+};
 
 exports.storeFacebookProfileImage = async (accessToken, imageUrl, uploadDir = path.join(path.resolve('./uploads/profiles'))) => {
   try {

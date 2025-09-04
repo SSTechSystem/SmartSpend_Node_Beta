@@ -18,15 +18,19 @@ const { sendMail } = require("../../common/utils/sendEmail");
 const smartspendDB = require("../../config/dbconfig");
 const { QueryTypes } = require("sequelize");
 const moment = require("moment");
+const axios = require("axios");
 
 //** Helper functions - START **//
 const handleGmailAuth = async (id_token) => {
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: id_token,
-      audience: constant.GOOGLE_CLIENT_ID.CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
+    const response = await axios.get(
+      `${constant.GOOGLE_TOKENINFO_BASE_URL}${id_token}`
+    );
+    if (!response.data) {
+      throw new Error("Empty response from Google token verification");
+    }
+
+    const payload = response.data;
     const gmailData = {
       email: payload.email,
       name: payload.name,
@@ -312,7 +316,14 @@ exports.userAuthorization = async (req) => {
       return res_arr;
     }
 
-    await db.UserMaster.update({ IsAuthorizedAppUser: 1 }, { where: { Id } });
+    await db.UserMaster.update(
+      {
+        IsAuthorizedAppUser: 1,
+        ForgotEmailToken: null,
+        expire_email_token: null,
+      },
+      { where: { Id } }
+    );
 
     const updatedUserData = await db.UserMaster.findOne({
       where: { Id },
@@ -818,7 +829,8 @@ exports.resendOtp = async (req) => {
 
     const otp = generateOTP();
     userData.ForgotEmailToken = otp;
-    await userData.save();
+    (userData.expire_email_token = new Date(Date.now() + 60000)),
+      await userData.save();
     const emailError = await sendVerificationEmail(userData.Email, otp);
     if (emailError) {
       return {
