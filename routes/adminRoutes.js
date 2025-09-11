@@ -44,9 +44,9 @@ route.get('/roles', verifyToken([ROLE.ADMIN]), adminControllers.getRoles);
 /* Admin CMS Routes */
 route.get('/cms', verifyToken([ROLE.ADMIN]), cmsControllers.getCmsData);
 
-route.post('/add-cms', verifyToken([ROLE.ADMIN]), cmsControllers.addCms);
+route.post('/add-cms', verifyToken([ROLE.ADMIN]), cmsControllers.manageCms);
 
-route.patch('/edit-cms', verifyToken([ROLE.ADMIN]), cmsControllers.editCms);
+route.patch('/edit-cms', verifyToken([ROLE.ADMIN]), cmsControllers.manageCms);
 
 route.get('/cms-details/:id', verifyToken([ROLE.ADMIN]), cmsControllers.getCmsDetails);
 

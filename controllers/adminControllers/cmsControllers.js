@@ -1,6 +1,6 @@
 const { validationResult } = require("express-validator");
 const universalFunction = require("../../common/helper/universalFunction");
-const { getCmsData, addCms, editCms, getCmsDetails, viewCms, deleteCms, deleteVersionHistory } = require("../../services/adminServices/cmsServices");
+const { getCmsData, getCmsDetails, viewCms, deleteCms, deleteVersionHistory, manageCms } = require("../../services/adminServices/cmsServices");
 
 exports.getCmsData = async (req, res) => {
   try {
@@ -17,7 +17,7 @@ exports.getCmsData = async (req, res) => {
   }
 };
 
-exports.addCms = async (req, res) => {
+exports.manageCms = async (req, res) => {
   try {
     if (validationResult(req).errors.length > 0) {
       return universalFunction.sendErrorResponse(
@@ -26,29 +26,7 @@ exports.addCms = async (req, res) => {
         400
       );
     }
-    const { statusCode, message, data } = await addCms(req);
-    return universalFunction.sendSuccessResponse(
-      res,
-      statusCode,
-      message,
-      data || {}
-    );
-  } catch (error) {
-    console.log("error: ", error);
-    return universalFunction.sendErrorResponse(res, error);
-  }
-};
-
-exports.editCms = async (req, res) => {
-  try {
-    if (validationResult(req).errors.length > 0) {
-      return universalFunction.sendErrorResponse(
-        res,
-        validationResult(req).errors[0].msg,
-        400
-      );
-    }
-    const { statusCode, message, data } = await editCms(req);
+    const { statusCode, message, data } = await manageCms(req);
     return universalFunction.sendSuccessResponse(
       res,
       statusCode,

@@ -10,8 +10,6 @@ const {
   readHTMLFile,
   enhanceGoogleProfilePic,
 } = require("../../common/utils/utils");
-const { OAuth2Client } = require("google-auth-library");
-const googleClient = new OAuth2Client(constant.GOOGLE_CLIENT_ID.CLIENT_ID);
 const handlebars = require("handlebars");
 const path = require("path");
 const { sendMail } = require("../../common/utils/sendEmail");

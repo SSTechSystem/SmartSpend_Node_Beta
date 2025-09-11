@@ -75,7 +75,8 @@
     "logout_success": "You have successfully Logged out",
     "version_history_not_found": "Version history not found",
     "version_history_get": "Version history get successfully",
-    "otp_sent": "OTP has been sent successfully"
+    "otp_sent": "OTP has been sent successfully",
+    "invalid_request_method": "Invalid request method"
   },
   "file_extension": {
     "jpg": ".jpg",
