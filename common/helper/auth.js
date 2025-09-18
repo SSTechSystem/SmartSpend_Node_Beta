@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
 const common = require("../statics/static.json");
+const { JWT_SECRET } = require("../constant/constant.json");
 const universalFunction = require("../helper/universalFunction");
 const { Sequelize, QueryTypes } = require("sequelize");
 const smartspendDB = require("../../config/dbconfig");
 
-const secretkey = process.env.JWT_SECRET;
+const secretkey = JWT_SECRET;
 
 exports.generateToken = async (user) => {
   try {

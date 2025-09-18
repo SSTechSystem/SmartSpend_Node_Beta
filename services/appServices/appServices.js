@@ -137,7 +137,7 @@ const sendVerificationEmail = async (Email, AuthorizationCode) => {
         const image_path = constant.BASE_URL + "/public/smart_spend_logo.png";
         var replacements = {
           USER_OTP: AuthorizationCode,
-          INQUIRY_EMAIL: process.env.INQUIRY_EMAIL,
+          INQUIRY_EMAIL: constant.INQUIRY_EMAIL,
           LOGO_IMG: image_path,
         };
         var htmlToSend = template(replacements);
