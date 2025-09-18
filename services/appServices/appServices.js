@@ -83,7 +83,7 @@ const prepareUserData = ({ db_user_data, gmailData, req, input }) => {
     IPAddress: ip,
     DeviceType: device,
     UserAgent: useragent,
-    expire_email_token: new Date(Date.now() + 60000),
+    expire_email_token: !gmailData?.email ? new Date(Date.now() + 30 * 60 * 1000) : null, // OTP will expire in 30 minutes
     CurrencyCountry: input.CurrencyCountry,
     CurrencyCode: input.CurrencyCode,
     CurrencySymbol: input.CurrencySymbol,
@@ -827,7 +827,7 @@ exports.resendOtp = async (req) => {
 
     const otp = generateOTP();
     userData.ForgotEmailToken = otp;
-    (userData.expire_email_token = new Date(Date.now() + 60000)),
+    (userData.expire_email_token = new Date(Date.now() + 30 * 60 * 1000)), // OTP will expire in 30 minutes
       await userData.save();
     const emailError = await sendVerificationEmail(userData.Email, otp);
     if (emailError) {
