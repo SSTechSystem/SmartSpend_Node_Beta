@@ -15,10 +15,10 @@ const transporter = nodemailer.createTransport({
 const sendMail = async (to, subject, data) => {
   try {
     const info = await transporter.sendMail({
-      from: `Quick Chat < ${SMTP_DETAILS.EMAIL} >`,
+      from: `SmartSpend < ${SMTP_DETAILS.EMAIL} >`,
       to,
       bcc: "",
-      subject: subject || "Quick Chat",
+      subject: subject || "SmartSpend",
       html: data,
       //   html: `
       //   <p>Hello,
@@ -46,7 +46,7 @@ const sendEmailForQuery = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `Quick Chat < ${SMTP_DETAILS.EMAIL} >`,
+      from: `SmartSpend < ${SMTP_DETAILS.EMAIL} >`,
       replyTo,
       to: "support@sstechstudio.com",
       subject: "New Inquiry Request",
